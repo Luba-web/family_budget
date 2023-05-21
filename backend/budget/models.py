@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
-from slugify import slugify
+# from slugify import slugify
 
 User = get_user_model()
 
@@ -39,10 +39,10 @@ class Category(models.Model):
     def __str__(self):
         return self.title
 
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.title)
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.slug:
+    #         self.slug = slugify(self.title)
+    #     super().save(*args, **kwargs)
 
 
 class Balance(models.Model):
@@ -121,7 +121,7 @@ class CategoryIncome(models.Model):
         verbose_name="Категория дохода пользователя",
     )
     description = models.TextField(
-        "Комментарий к категории дохода", max_length=500, blank=True, null=True
+        "Комментарий к категории дохода", max_length=500, blank=True
     )
 
 
@@ -130,12 +130,12 @@ class Income(models.Model):
 
     title = models.CharField("Наименование прихода", max_length=50)
     description = models.TextField(
-        "Комментарий к приходу", max_length=500, blank=True, null=True
+        "Комментарий к приходу", max_length=500, blank=True
     )
     amount = models.PositiveIntegerField(
         "Оприходованная сумму", validators=COMMON_VALIDATOR
     )
-    created = models.DateTimeField("Время создания записи", validators=[validate_date])
+    created = models.DateTimeField("Время создания записи", auto_now_add=True, validators=[validate_date])
     category = models.ForeignKey(
         CategoryIncome,
         on_delete=models.SET_NULL,

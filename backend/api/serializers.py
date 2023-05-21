@@ -35,19 +35,13 @@ class CategoryIncomeSerializer(serializers.ModelSerializer):
 
 
 class IncomeSerializer(serializers.ModelSerializer):
-    category = serializers.PrimaryKeyRelatedField(
-        queryset=CategoryIncome.objects.all(),
-    )
 
     class Meta:
         model = Income
-        fields = ("id", "title", "amount", "create", "category")
+        fields = ("id", "title", "amount", "created", "category")
 
 
 class MoneyBoxSerializer(serializers.ModelSerializer):
-    category = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(),
-    )
 
     class Meta:
         model = MoneyBox
@@ -58,7 +52,8 @@ class MoneyBoxSerializer(serializers.ModelSerializer):
             "accumulation",
             "is_collected",
             "achieved",
-            "category" "description",
+            "category",
+            "description",
         )
 
     def update(self, instance, validated_data):
@@ -86,9 +81,9 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class SpendSerializer(serializers.ModelSerializer):
-    category = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(),
-    )
+    # category = serializers.PrimaryKeyRelatedField(
+    #     queryset=Category.objects.all(),
+    # )
 
     class Meta:
         model = Spend
@@ -101,10 +96,10 @@ class SpendSerializer(serializers.ModelSerializer):
             "category",
         )
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        category_id = data.get("category")
-        category = Category.objects.get(pk=category_id)
-        category_serializer = CategorySerializer(category)
-        data["category"] = category_serializer.data
-        return data
+    # def to_representation(self, instance):
+    #     data = super().to_representation(instance)
+    #     category_id = data.get("category")
+    #     category = Category.objects.get(pk=category_id)
+    #     category_serializer = CategorySerializer(category)
+    #     data["category"] = category_serializer.data
+    #     return data

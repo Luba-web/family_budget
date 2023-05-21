@@ -1,6 +1,8 @@
+from datetime import datetime as dt
 from budget.models import Category, CategoryIncome, Income, MoneyBox, Spend
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from .permissions import IsAuthor
 from .serializers import (
@@ -27,6 +29,8 @@ class MoneyBoxViewSet(viewsets.ModelViewSet):
     def goal_achieved(self, request, pk=None):
         moneybox = MoneyBox.objects.get(id=pk)
         if moneybox.is_collected:
+            if moneybox.achieved:
+                return Response({"Так-так": "Цель уже достигнута"})
             moneybox.achieved = True
             moneybox.save()
             Spend.objects.create(
@@ -35,7 +39,10 @@ class MoneyBoxViewSet(viewsets.ModelViewSet):
                 description=moneybox.description,
                 category=moneybox.category,
                 user=request.user,
+                created=dt.now()
             )
+            return Response({"Браво": "Цель достигнута"})
+        return Response({"Так-так": "Работай больше, иди копи еще"})
 
 
 class IncomeViewSet(viewsets.ModelViewSet):

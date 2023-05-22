@@ -22,6 +22,5 @@ router_v1.register("spends", SpendViewSet, basename="spends")
 
 urlpatterns = [
     path("", include(router_v1.urls)),
-    # path('auth/', include('djoser.urls')),
     path("auth/", include("djoser.urls.authtoken")),
 ]

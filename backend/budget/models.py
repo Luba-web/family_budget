@@ -1,9 +1,9 @@
+from colorfield.fields import ColorField
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
-# from slugify import slugify
 
 User = get_user_model()
 
@@ -25,6 +25,12 @@ class Category(models.Model):
     description = models.TextField(
         "Описание категории трат", max_length=500, blank=True, null=True
     )
+    color = ColorField('HEX-код цвета', max_length=7)
+    icon = models.ImageField(       
+        upload_to="iconscategory",
+        verbose_name="Иконка категории",
+        blank=True,
+    )
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -35,14 +41,15 @@ class Category(models.Model):
     class Meta:
         verbose_name = "Категория"
         verbose_name_plural = "Категории"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title', 'user'],
+                name='unique_title_user_category'
+            )
+        ]
 
     def __str__(self):
         return self.title
-
-    # def save(self, *args, **kwargs):
-    #     if not self.slug:
-    #         self.slug = slugify(self.title)
-    #     super().save(*args, **kwargs)
 
 
 class Balance(models.Model):
@@ -113,16 +120,32 @@ class Spend(models.Model):
 class CategoryIncome(models.Model):
     """Модель Категорий для доходных средств."""
 
-    title = models.CharField("Название категории", max_length=150, unique=True)
+    title = models.CharField("Название категории", max_length=150)
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="category_incomes",
         verbose_name="Категория дохода пользователя",
     )
+    color = ColorField('HEX-код цвета', max_length=7)
+    icon = models.ImageField(       
+        upload_to="iconscategory",
+        verbose_name="Иконка категории",
+        blank=True,
+    )
     description = models.TextField(
         "Комментарий к категории дохода", max_length=500, blank=True
     )
+
+    class Meta:
+        verbose_name = "Категория дохода"
+        verbose_name_plural = "Категориb дохода"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title', 'user'],
+                name='unique_title_user'
+            )
+        ]
 
 
 class Income(models.Model):

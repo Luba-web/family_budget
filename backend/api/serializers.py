@@ -1,8 +1,9 @@
-from budget.models import Category, CategoryIncome, Income, MoneyBox, Spend
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+
+from budget.models import Category, CategoryIncome, Income, MoneyBox, Spend
 
 User = get_user_model()
 
@@ -29,19 +30,40 @@ class UserSerializer(UserCreateSerializer):
 
 
 class CategoryIncomeSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = CategoryIncome
-        fields = ("id", "title", "description")
+        fields = ("id", "title", "description", "icon", "color")
 
 
 class IncomeSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username'
+    )
+    category = CategoryIncomeSerializer()
+
+    class Meta:
+        model = Income
+        fields = ("id", "title", "user", "amount", "created", "category")
+
+
+class IncomeAddSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Income
         fields = ("id", "title", "amount", "created", "category")
 
+    def to_representation(self, instance):
+        return IncomeSerializer(self).to_representation(instance)
+
 
 class MoneyBoxSerializer(serializers.ModelSerializer):
+
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(),
+        required=False
+    )
 
     class Meta:
         model = MoneyBox
@@ -55,6 +77,7 @@ class MoneyBoxSerializer(serializers.ModelSerializer):
             "category",
             "description",
         )
+        read_only_fields = ("achieved",)
 
     def update(self, instance, validated_data):
         accumulation = validated_data.pop("accumulation", None)
@@ -66,24 +89,39 @@ class MoneyBoxSerializer(serializers.ModelSerializer):
             instance.accumulation = summa
         return super().update(instance, validated_data)
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        category_id = data.get("category")
+        if category_id is not None:
+            category = Category.objects.get(pk=category_id)
+            category_serializer = CategorySerializer(category)
+            data["category"] = category_serializer.data
+            return data
+        return data
+
 
 class CategorySerializer(serializers.ModelSerializer):
-    slug = serializers.ReadOnlyField()
 
     class Meta:
         model = Category
         fields = (
             "id",
-            "slug",
             "title",
             "description",
+            "icon",
+            "color"
         )
 
 
 class SpendSerializer(serializers.ModelSerializer):
-    # category = serializers.PrimaryKeyRelatedField(
-    #     queryset=Category.objects.all(),
-    # )
+
+    user = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username'
+    )
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(),
+    )
 
     class Meta:
         model = Spend
@@ -96,10 +134,12 @@ class SpendSerializer(serializers.ModelSerializer):
             "category",
         )
 
-    # def to_representation(self, instance):
-    #     data = super().to_representation(instance)
-    #     category_id = data.get("category")
-    #     category = Category.objects.get(pk=category_id)
-    #     category_serializer = CategorySerializer(category)
-    #     data["category"] = category_serializer.data
-    #     return data
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        category_id = data.get("category")
+        if category_id is not None:
+            category = Category.objects.get(pk=category_id)
+            category_serializer = CategorySerializer(category)
+            data["category"] = category_serializer.data
+            return data
+        return data
